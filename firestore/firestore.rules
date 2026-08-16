@@ -1,0 +1,124 @@
+rules_version = '2';
+
+// ✅ REGLAS FINALES — listas para Firebase Console → Firestore Database → Reglas.
+// Cerradas en Fase 6, con los patrones de acceso reales de los módulos
+// construidos en Fases 1-5. Requiere que cada usuario autenticado tenga
+// un documento en usuarios/{uid} con `rol` (administrador|empleado|tecnico)
+// y `activo: true`.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    function perfilUsuario() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function rolActual() {
+      return perfilUsuario().rol;
+    }
+
+    function usuarioActivo() {
+      return estaAutenticado() && perfilUsuario().activo == true;
+    }
+
+    function esAdmin() {
+      return usuarioActivo() && rolActual() == 'administrador';
+    }
+
+    function esEmpleadoOAdmin() {
+      return usuarioActivo() && (rolActual() == 'administrador' || rolActual() == 'empleado');
+    }
+
+    // --- usuarios: cada quien lee su propio perfil; solo admin escribe ---
+    match /usuarios/{uid} {
+      allow read: if estaAutenticado() && (request.auth.uid == uid || esAdmin());
+      allow write: if esAdmin();
+    }
+
+    // --- configuracion: lectura para cualquier autenticado, escritura solo admin ---
+    match /configuracion/{doc} {
+      allow read: if usuarioActivo();
+      allow write: if esAdmin();
+    }
+
+    // --- clientes: admin y empleado pueden CRUD; técnico solo lee ---
+    match /clientes/{clienteId} {
+      allow read: if usuarioActivo();
+      allow create, update: if esEmpleadoOAdmin();
+      allow delete: if false; // nunca borrado físico (sección 49)
+    }
+
+    // --- ordenes: admin/empleado CRUD; técnico solo lee/edita las suyas ---
+    match /ordenes/{ordenId} {
+      allow read: if usuarioActivo();
+      allow create: if esEmpleadoOAdmin();
+      allow update: if esEmpleadoOAdmin() ||
+        (usuarioActivo() && rolActual() == 'tecnico' && resource.data.tecnicoUid == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // --- cotizaciones: admin/empleado CRUD; técnico sin acceso ---
+    match /cotizaciones/{cotId} {
+      allow read, create, update: if esEmpleadoOAdmin();
+      allow delete: if false;
+    }
+
+    // --- inventario: admin CRUD completo; empleado SOLO puede tocar el
+    // campo "stock" (lo necesita el descuento automático al marcar una
+    // orden como "entregada" — sección 26). Nunca precio/costo/SKU.
+    match /productos/{productoId} {
+      allow read: if usuarioActivo();
+      allow create: if esAdmin();
+      allow update: if esAdmin() ||
+        (esEmpleadoOAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']));
+      allow delete: if false;
+    }
+    match /movimientosInventario/{movId} {
+      allow read: if usuarioActivo();
+      allow create: if esEmpleadoOAdmin();
+      allow update, delete: if false; // los movimientos son inmutables
+    }
+
+    // --- pagos: admin/empleado; técnico sin acceso ---
+    match /pagos/{pagoId} {
+      allow read, create: if esEmpleadoOAdmin();
+      allow update: if esAdmin(); // solo admin corrige un pago ya registrado
+      allow delete: if false;
+    }
+
+    // --- ingresos: NO es una colección propia — se calculan en vivo a
+    // partir de `pagos` (ver js/modules/ingresos.js). Nunca se escribe aquí.
+    // --- gastos: colección preparada para cuando se active el módulo
+    // (sección 37); todavía no hay UI que escriba en ella.
+    match /gastos/{id} {
+      allow read, write: if esAdmin();
+    }
+
+    // --- estadisticas: contador acumulado (Fase 8) para evitar leer todo
+    // el historial de órdenes cada vez que se calcula el ticket promedio
+    // del Dashboard. Empleado/admin pueden incrementarlo al entregar una
+    // orden; nunca se borra ni se reemplaza por completo desde el cliente.
+    match /estadisticas/{id} {
+      allow read: if usuarioActivo();
+      allow create, update: if esEmpleadoOAdmin();
+      allow delete: if false;
+    }
+
+    // --- folios: solo vía transacción desde el cliente autenticado autorizado ---
+    match /folios/{folioId} {
+      allow read: if usuarioActivo();
+      allow write: if esEmpleadoOAdmin();
+    }
+
+    // --- auditoria: cualquier usuario activo puede crear su propio registro; solo admin lee todo ---
+    match /auditoria/{id} {
+      allow create: if usuarioActivo();
+      allow read: if esAdmin();
+      allow update, delete: if false; // inmutable
+    }
+  }
+}

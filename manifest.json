@@ -1,0 +1,19 @@
+{
+  "name": "ALARMAS Y GPS",
+  "short_name": "Alarmas GPS",
+  "description": "Sistema de gestión empresarial para ALARMAS Y GPS. Desarrollado por NEXORA.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B0D0C",
+  "theme_color": "#0B0D0C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/logos/reset-alarmas-gps.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Iniciar sesión — ALARMAS Y GPS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B0D0C">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/responsive.css">
+<style>
+  body.login-body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  .login-card {
+    background: var(--fondo-superficie);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: var(--sombra);
+  }
+  .login-card__logo { text-align: center; margin-bottom: 8px; }
+  .login-card__logo img { max-width: 220px; height: auto; }
+  .login-card__dev {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--texto-secundario);
+    margin-bottom: 24px;
+  }
+  .login-card__dev img { height: 16px; vertical-align: middle; margin-left: 4px; opacity: 0.8; }
+  .campo-password { position: relative; }
+  .campo-password button {
+    position: absolute; right: 8px; top: 30px;
+    background: transparent; border: none; color: var(--texto-secundario);
+    cursor: pointer; font-size: 0.85rem;
+  }
+  .login-links { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 4px; margin-bottom: 16px; }
+  .login-links a { color: var(--acento); cursor: pointer; }
+  .login-error {
+    background: rgba(229,72,77,0.12);
+    border: 1px solid var(--peligro);
+    color: var(--peligro);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .checkbox-recordar { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 0.85rem; }
+</style>
+</head>
+<body class="login-body" data-tema="oscuro">
+
+<div class="login-card">
+  <div class="login-card__logo">
+    <img src="assets/logos/reset-alarmas-gps.jpg" alt="ALARMAS Y GPS">
+  </div>
+  <div class="login-card__dev">
+    Desarrollado por
+    <img src="assets/logos/nexora.png" alt="NEXORA">
+  </div>
+
+  <div id="banner-config" style="display:none; margin-bottom:14px;">
+    ⚠️ Firebase no está configurado (js/config.js). El login no funcionará hasta configurarlo.
+  </div>
+
+  <div id="login-error" class="login-error"></div>
+
+  <form id="form-login">
+    <label>Correo electrónico
+      <input type="email" name="email" required autocomplete="username">
+    </label>
+    <div class="campo-password">
+      <label>Contraseña
+        <input type="password" name="password" id="input-password" required autocomplete="current-password">
+      </label>
+      <button type="button" id="btn-ver-password">Ver</button>
+    </div>
+    <div class="login-links">
+      <label class="checkbox-recordar">
+        <input type="checkbox" id="check-recordar" checked> Recordar sesión
+      </label>
+      <a id="link-recuperar">¿Olvidaste tu contraseña?</a>
+    </div>
+    <button type="submit" class="btn btn--primario" id="btn-login" style="width:100%;">Iniciar sesión</button>
+  </form>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { iniciarSesion, recuperarContrasena } from "./js/auth.js";
+  import { FIREBASE_CONFIGURED } from "./js/firebase.js";
+  import { mostrarToast } from "./js/utils.js";
+
+  if (!FIREBASE_CONFIGURED) {
+    document.getElementById("banner-config").style.display = "block";
+  }
+
+  const form = document.getElementById("form-login");
+  const errorBox = document.getElementById("login-error");
+  const btnLogin = document.getElementById("btn-login");
+
+  document.getElementById("btn-ver-password").addEventListener("click", (e) => {
+    const input = document.getElementById("input-password");
+    const mostrar = input.type === "password";
+    input.type = mostrar ? "text" : "password";
+    e.target.textContent = mostrar ? "Ocultar" : "Ver";
+  });
+
+  document.getElementById("link-recuperar").addEventListener("click", async () => {
+    const email = form.email.value.trim();
+    if (!email) {
+      mostrarToast("Escribe tu correo primero para poder enviarte el enlace de recuperación.", "error");
+      return;
+    }
+    const r = await recuperarContrasena(email);
+    if (r.ok) mostrarToast("Te enviamos un enlace para restablecer tu contraseña.", "exito");
+    else mostrarToast(r.error, "error");
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBox.style.display = "none";
+    btnLogin.disabled = true;
+    btnLogin.textContent = "Ingresando...";
+
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    const r = await iniciarSesion(email, password);
+
+    btnLogin.disabled = false;
+    btnLogin.textContent = "Iniciar sesión";
+
+    if (r.ok) {
+      window.location.href = "index.html";
+    } else {
+      errorBox.textContent = r.error;
+      errorBox.style.display = "block";
+    }
+  });
+</script>
+</body>
+</html>

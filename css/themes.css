@@ -1,0 +1,36 @@
+:root {
+  --color-negro: #0B0D0C;
+  --color-gris-oscuro: #1B1F1D;
+  --color-naranja: #FF6B00;
+  --color-naranja-oscuro: #CC5500;
+  --color-verde: #4CAF50;
+  --color-verde-oscuro: #2E7D32;
+  --color-blanco: #F5F6F5;
+  --color-gris-claro: #E3E5E3;
+
+  --fondo: var(--color-negro);
+  --fondo-superficie: var(--color-gris-oscuro);
+  --fondo-tarjeta: #232723;
+  --texto: var(--color-blanco);
+  --texto-secundario: #A7ACA9;
+  --acento: var(--color-naranja);
+  --exito: var(--color-verde);
+  --peligro: #E5484D;
+  --borde: #2E332F;
+
+  --radio: 10px;
+  --sombra: 0 2px 10px rgba(0, 0, 0, 0.4);
+  --fuente-display: "Rajdhani", "Inter", sans-serif;
+  --fuente-cuerpo: "Inter", sans-serif;
+  --fuente-mono: "JetBrains Mono", monospace;
+}
+
+[data-tema="claro"] {
+  --fondo: #F4F5F3;
+  --fondo-superficie: #FFFFFF;
+  --fondo-tarjeta: #FFFFFF;
+  --texto: #14161A;
+  --texto-secundario: #5B5F5B;
+  --borde: #DDE1DC;
+  --sombra: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
