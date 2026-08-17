@@ -11,12 +11,12 @@
  */
 
 export const FIREBASE_CONFIG = {
-  apiKey: "PENDIENTE_apiKey",
-  authDomain: "PENDIENTE.firebaseapp.com",
-  projectId: "PENDIENTE",
-  storageBucket: "PENDIENTE.appspot.com",
-  messagingSenderId: "PENDIENTE",
-  appId: "PENDIENTE",
+  apiKey: "AIzaSyCAakofYxZbREM1uph_lQNqQtTHe5rmEhE",
+  authDomain: "alarmas-rst-nexora.firebaseapp.com",
+  projectId: "alarmas-rst-nexora",
+  storageBucket: "alarmas-rst-nexora.firebasestorage.app",
+  messagingSenderId: "415565428436",
+  appId: "1:415565428436:web:d95b85905d79e1f5186d41",
 };
 
 // Bandera para saber si ya se configuró Firebase realmente.
